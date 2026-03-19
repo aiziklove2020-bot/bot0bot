@@ -247,12 +247,41 @@ async def pending_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     if not pending_posts:
-        await query.edit_message_text("✅ *אין פרסומים ממתינים*", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 חזור", callback_data="back_start")]]), parse_mode="Markdown")
+        await query.edit_message_text(
+            "✅ *אין פרסומים ממתינים*",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 חזור", callback_data="back_start")]]),
+            parse_mode="Markdown"
+        )
         return
-    text = f"📋 *{len(pending_posts)} פרסומים ממתינים:*\n\n"
-    for pid, p in pending_posts.items():
-        text += f"• @{p['username']}: {p['text'][:40]}...\n"
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 חזור", callback_data="back_start")]]), parse_mode="Markdown")
+
+    await query.edit_message_text(f"📋 *{len(pending_posts)} פרסומים ממתינים — שולח אותם אליך:*", parse_mode="Markdown")
+
+    for post_id, post in pending_posts.items():
+        keyboard = [
+            [InlineKeyboardButton("✅ אשר ופרסם", callback_data=f"approve_{post_id}"),
+             InlineKeyboardButton("❌ דחה", callback_data=f"reject_{post_id}")]
+        ]
+        admin_text = (
+            f"🔔 *ממתין לאישור*\n\n"
+            f"👤 שולח: @{post['username']} (`{post['user_id']}`)\n\n"
+            f"📝 *תוכן:*\n{post['text']}"
+        )
+        try:
+            if post.get('photo'):
+                await context.bot.send_photo(
+                    query.from_user.id, post['photo'],
+                    caption=admin_text,
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown"
+                )
+            else:
+                await context.bot.send_message(
+                    query.from_user.id, admin_text,
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown"
+                )
+        except Exception as e:
+            logger.error(f"Pending list error: {e}")
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
