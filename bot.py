@@ -123,7 +123,8 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await context.bot.send_message(
                 post["user_id"],
-                "😔 הפרסום שלך נדחה על ידי האדמין"
+                "😔 הפרסום שלך נדחה על ידי האדמין.\n\n"
+                "לפרטים נוספים צור קשר עם המנהל: @aizik_kastoryano"
             )
         except:
             pass
